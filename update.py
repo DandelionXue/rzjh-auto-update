@@ -7,7 +7,6 @@ import zipfile
 import time
 import shutil
 
-
 def newDownload(url, file_path, ui):
     # 第一次请求是为了得到文件总大小
     r1 = requests.get(url, stream=True, verify=False)
@@ -18,11 +17,11 @@ def newDownload(url, file_path, ui):
         temp_size = os.path.getsize(file_path)  # 本地已经下载的文件大小
     else:
         temp_size = 0
-    # 显示一下下载了多少   
+    # 显示一下下载了多少
     print(temp_size)
     print(total_size)
     # 核心部分，这个是请求下载时，从本地文件已经下载过的后面下载
-    headers = {'Range': 'bytes=%d-' % temp_size}  
+    headers = {'Range': 'bytes=%d-' % temp_size}
     # 重新请求网址，加入新的请求头的
     r = requests.get(url, stream=True, verify=False, headers=headers)
 
@@ -114,7 +113,7 @@ def reversion(version_path, new_version):  # 将获取的新版本号替换进�
     #print(data)
     j = json.loads(data)
     #print(j)
-    #res = geturl1(version_path) 
+    #res = geturl1(version_path)
     j["version"] = new_version
     with open(version_path, 'wb') as f:
         f.write(json.dumps(j).encode("utf-8"))  # 写进json
@@ -131,7 +130,7 @@ def rename(pathT,local_version):  # 更改老版本文件名
     if os.path.exists(name):
         os.rename(name, b.encode("utf-8"))
     else:
-        pass    
+        pass
 
 #def delold():  # 删除更名后的老版本
     #shutil.rmtree("将要删除的文件夹路径和文件夹名willdele")
@@ -157,6 +156,7 @@ def get_url_Ip(version_path):  # 读取本地版本信息
     j = json.loads(data)
     version_url = j["version_url"]  # 读取key"version"对应的value值
     return version_url
+
 def get_down_url_Ip(version_path):  # 读取本地版本信息
     f = open(version_path, 'r')  # 打开路径下的json文件，‘r’表示文件可读
     data = f.read()
@@ -164,16 +164,39 @@ def get_down_url_Ip(version_path):  # 读取本地版本信息
     down_url = j["down_url"]
     return down_url
 
+def get_config_path(config_path):  # 读取本地版本信息
+    f = open(config_path, 'r')  # 打开路径下的json文件，‘r’表示文件可读
+    data = f.read()
+    j = json.loads(data)
+    config_url = j["config_path"]
+    return config_url
+
+def obtain_version(filename):
+    """获取版本信息"""
+    with open(filename) as f:
+        content = f.readlines()
+        for line in content:
+            line = line.lower()
+            if '=' in line:#获取等号的下标
+                a = line.index('=')
+                left = line[:a]#等号左边为一个值
+                right = line [a+1:]#等号右边为一个值
+                if left == 'version':#判断左边值是否为version
+                    print(right)
+                    break
+
 
 
 def doUpdate(ui):
-    version_path = "config.json"
+    config_path = "config.json"
+    config_url = get_config_path(config_path)
     server_ip = getServerIp(version_path)
     ui.printf("连接更新服务器：" + str(server_ip))
+
     version_url = '{}{}{}'.format('http://', server_ip, get_url_Ip(version_path))
     download_url = '{}{}{}'.format('http://', server_ip, get_down_url_Ip(version_path) )
     gxtxt_url = '{}{}{}'.format('http://', server_ip, '/gx.txt')
-    local_version = getLocalVersion(version_path)
+    local_version = obtain_version(config_url)
     ui.printf("本地版本：" + str(local_version))
     new_version= geturl1(local_version,version_url)
     ui.printf("服务器版本：" + str(new_version))
@@ -197,13 +220,15 @@ def doUpdate(ui):
 
 
 
+
+
 def checkUpdate(ui):
     start_time = time.time()
     version_path = "config.json"
     server_ip = getServerIp(version_path)
     ui.printf("连接更新服务器：" + str(server_ip))
-    version_url = '{}{}{}'.format('http://', server_ip, get_url_Ip(version_path))
-    download_url = '{}{}{}'.format('http://', server_ip, get_down_url_Ip(version_path) )
+    version_url = '{}{}{}'.format('http://', server_ip, '/version_cpp.json')
+    download_url = '{}{}{}'.format('http://', server_ip, '/rzjh_cpp.zip')
     local_version = getLocalVersion(version_path)
     ui.printf("本地版本：" + str(local_version))
     new_version= geturl1(local_version,version_url )
